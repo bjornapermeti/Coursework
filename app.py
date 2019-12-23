@@ -32,9 +32,10 @@ def register():
         email = request.form.get("email")
 
         if password == confirm:     #we submit the form if the password is the same as the confirm    
-            db.execute("INSERT INTO users(name, username, email) VALUES(:name,:username,:email)",
-                                         {"name":name,"username":username,"email":email})
+            db.execute("INSERT INTO users(name, username, password, email) VALUES(:name,:username,:password,:email)",
+                                         {"name":name,"username":username,"password":password,"email":email})
             db.commit()
+            flash("you are registered and can login","success")
             return redirect(url_for('login'))
         else:
             flash("password does not match","danger")
@@ -44,8 +45,28 @@ def register():
 
 #login
 
-@app.route("/login")
+@app.route("/login", methods=["GET","POST"])
 def login():
+    if request.method == "POST":
+         username = request.form.get("username")
+         password = request.form.get("password")
+
+         usernamedata = db.execute("SELECT username FROM users WHERE password=:password",{"username":username}).fetchone()
+         passwordata = db.execute("SELECT password FROM users WHERE username=:username",{"username":username}).fetchone()
+
+         if usernamedata is None:
+             flash("No username", "danger")
+             return render_template("login.html")
+         else:
+             for passwor_data in passwordata:
+                 if sha256_crypt.verify(password,passwor_data):
+                     flash("You are now login", "success")
+                     return redirect(url_for('photo'))
+                 else:
+                     flash("incorrect password","danger")
+                     return render_template("login.html")
+
     return render_template("login.html")
 if __name__ == "__main__":
+    app.secret_key="coursework123"
     app.run(debug=True)
