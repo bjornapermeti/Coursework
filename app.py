@@ -33,7 +33,7 @@ def register():
 
         if password == confirm:     #we submit the form if the password is the same as the confirm    
             db.execute("INSERT INTO users(name, username, password, email) VALUES(:name,:username,:password,:email)",
-                                         {"name":name,"username":username,"password":password,"email":email})
+                                         {"name":name,"username":username,"password":secure_password,"email":email})
             db.commit()
             flash("you are registered and can login","success")
             return redirect(url_for('login'))
@@ -51,7 +51,7 @@ def login():
          username = request.form.get("username")
          password = request.form.get("password")
 
-         usernamedata = db.execute("SELECT username FROM users WHERE password=:password",{"username":username}).fetchone()
+         usernamedata = db.execute("SELECT username FROM users WHERE username=:username",{"username":username}).fetchone()
          passwordata = db.execute("SELECT password FROM users WHERE username=:username",{"username":username}).fetchone()
 
          if usernamedata is None:
@@ -60,6 +60,8 @@ def login():
          else:
              for passwor_data in passwordata:
                  if sha256_crypt.verify(password,passwor_data):
+                     session["log"]= True
+
                      flash("You are now login", "success")
                      return redirect(url_for('photo'))
                  else:
@@ -67,6 +69,20 @@ def login():
                      return render_template("login.html")
 
     return render_template("login.html")
+
+#photo
+@app.route("/photo")
+def photo():
+    return render_template("photo.html")
+
+
+#logout
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You are now logged out", "success")
+    return redirect(url_for('login'))
+
 if __name__ == "__main__":
     app.secret_key="coursework123"
     app.run(debug=True)
